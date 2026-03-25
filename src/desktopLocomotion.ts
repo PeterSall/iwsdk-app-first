@@ -14,6 +14,7 @@ export class DesktopLocomotionSystem extends createSystem({}) {
   private isDesktopMode = false;
   private speed = 5; // units per second
   private mouseSensitivity = 0.001;
+  private jumpSpeed = 8; // units per second for jumping
 
   init() {
     // World is available as 'this.world' via the ECS system base class
@@ -40,6 +41,17 @@ export class DesktopLocomotionSystem extends createSystem({}) {
       // Transform direction by camera's current rotation (relative to world)
       this.direction.applyQuaternion(camera.quaternion);
       camera.position.add(this.direction);
+    }
+
+    // Handle jumping with space key
+    if (this.keys[" "] || this.keys["Space"]) {
+      camera.position.y += this.jumpSpeed * delta;
+    }
+
+    // Handle downward movement with shift key
+    //if (this.keys["Control"] || this.keys["Ctrl"]) {
+    if (this.keys["Shift"]) {
+      camera.position.y -= this.jumpSpeed * delta;
     }
   }
 
