@@ -106,6 +106,9 @@ World.create(document.getElementById("scene-container") as HTMLDivElement, {
   world
     .createTransformEntity(robotMesh)
     .addComponent(Interactable)
+    .addComponent(DistanceGrabbable, {
+      movementMode: MovementMode.MoveFromTarget,
+    })
     .addComponent(Robot)
     .addComponent(AudioSource, {
       src: "./audio/chime.mp3",
