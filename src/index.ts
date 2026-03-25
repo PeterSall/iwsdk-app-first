@@ -24,6 +24,8 @@ import { EnvironmentType, LocomotionEnvironment } from "@iwsdk/core";
 
 import { PanelWelcomeSystem } from "./panelWelcome.js";
 
+import { PanelLoadObjectSystem } from "./panelLoadObject.js";
+
 import { Robot } from "./robot.js";
 
 import { RobotSystem } from "./robot.js";
@@ -133,6 +135,16 @@ World.create(document.getElementById("scene-container") as HTMLDivElement, {
     });
   panelEntity.object3D!.position.set(0, 1.29, -1.9);
 
+  const loadObjectPanelEntity = world
+    .createTransformEntity()
+    .addComponent(PanelUI, {
+      config: "./ui/loadObject.json",
+      maxHeight: 0.8,
+      maxWidth: 1.6,
+    })
+    .addComponent(Interactable);
+  loadObjectPanelEntity.object3D!.position.set(3, 1.23, -1.9);
+
   const imiteraLogoTexture = AssetManager.getTexture("imiteraLogo")!;
   imiteraLogoTexture.colorSpace = SRGBColorSpace;
   const logoBanner = new Mesh(
@@ -146,7 +158,7 @@ World.create(document.getElementById("scene-container") as HTMLDivElement, {
   logoBanner.position.set(0, 1, 1.8);
   logoBanner.rotateY(Math.PI);
 
-  world.registerSystem(PanelWelcomeSystem).registerSystem(RobotSystem);
+  world.registerSystem(PanelWelcomeSystem).registerSystem(PanelLoadObjectSystem).registerSystem(RobotSystem);
 
   // Setup desktop browser controls
   setupDesktopLocomotion(world);
