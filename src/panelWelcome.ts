@@ -8,7 +8,7 @@ import {
   UIKit,
 } from "@iwsdk/core";
 
-export class PanelSystem extends createSystem({
+export class PanelWelcomeSystem extends createSystem({
   welcomePanel: {
     required: [PanelUI, PanelDocument],
     where: [eq(PanelUI, "config", "./ui/welcome.json")],

@@ -22,7 +22,7 @@ import {
 
 import { EnvironmentType, LocomotionEnvironment } from "@iwsdk/core";
 
-import { PanelSystem } from "./panel.js";
+import { PanelWelcomeSystem } from "./panelWelcome.js";
 
 import { Robot } from "./robot.js";
 
@@ -146,7 +146,7 @@ World.create(document.getElementById("scene-container") as HTMLDivElement, {
   logoBanner.position.set(0, 1, 1.8);
   logoBanner.rotateY(Math.PI);
 
-  world.registerSystem(PanelSystem).registerSystem(RobotSystem);
+  world.registerSystem(PanelWelcomeSystem).registerSystem(RobotSystem);
 
   // Setup desktop browser controls
   setupDesktopLocomotion(world);
