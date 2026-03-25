@@ -30,7 +30,7 @@ import { RobotSystem } from "./robot.js";
 
 const assets: AssetManifest = {
   chimeSound: {
-    url: "/audio/chime.mp3",
+    url: "./audio/chime.mp3",
     type: AssetType.Audio,
     priority: "background",
   },
