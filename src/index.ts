@@ -28,6 +28,8 @@ import { Robot } from "./robot.js";
 
 import { RobotSystem } from "./robot.js";
 
+import { setupDesktopLocomotion } from "./desktopLocomotion.js";
+
 const assets: AssetManifest = {
   chimeSound: {
     url: "./audio/chime.mp3",
@@ -145,4 +147,7 @@ World.create(document.getElementById("scene-container") as HTMLDivElement, {
   logoBanner.rotateY(Math.PI);
 
   world.registerSystem(PanelSystem).registerSystem(RobotSystem);
+
+  // Setup desktop browser controls
+  setupDesktopLocomotion(world);
 });
