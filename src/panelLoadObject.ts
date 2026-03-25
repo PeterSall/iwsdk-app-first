@@ -4,10 +4,12 @@ import {
   PanelDocument,
   eq,
   VisibilityState,
+  DistanceGrabbable,
   UIKitDocument,
   UIKit,
   AssetManager,
   Interactable,
+  MovementMode,
 } from "@iwsdk/core";
 
 export class PanelLoadObjectSystem extends createSystem({
@@ -37,7 +39,9 @@ export class PanelLoadObjectSystem extends createSystem({
           tractor.position.set(0, 0, -2);
 
           const tractorEntity = this.world.createTransformEntity(tractor);
-          tractorEntity.addComponent(Interactable);
+          tractorEntity.addComponent(Interactable).addComponent(DistanceGrabbable, {
+                movementMode: MovementMode.MoveFromTarget,
+        });
 
           xrButton.setProperties({ text: "Tractor loaded!" });
         } catch (err) {
