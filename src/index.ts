@@ -35,7 +35,7 @@ const assets: AssetManifest = {
     priority: "background",
   },
   webxr: {
-    url: "/textures/webxr.png",
+    url: "./textures/webxr.png",
     type: AssetType.Texture,
     priority: "critical",
   },
