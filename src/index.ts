@@ -34,8 +34,8 @@ const assets: AssetManifest = {
     type: AssetType.Audio,
     priority: "background",
   },
-  webxr: {
-    url: "./textures/webxr.png",
+  imiteraLogo: {
+    url: "./textures/imitera-logo-black-2000.png",
     type: AssetType.Texture,
     priority: "critical",
   },
@@ -128,12 +128,12 @@ World.create(document.getElementById("scene-container") as HTMLDivElement, {
     });
   panelEntity.object3D!.position.set(0, 1.29, -1.9);
 
-  const webxrLogoTexture = AssetManager.getTexture("webxr")!;
-  webxrLogoTexture.colorSpace = SRGBColorSpace;
+  const imiteraLogoTexture = AssetManager.getTexture("imiteraLogo")!;
+  imiteraLogoTexture.colorSpace = SRGBColorSpace;
   const logoBanner = new Mesh(
     new PlaneGeometry(3.39, 0.96),
     new MeshBasicMaterial({
-      map: webxrLogoTexture,
+      map: imiteraLogoTexture,
       transparent: true,
     }),
   );
