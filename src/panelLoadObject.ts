@@ -6,6 +6,8 @@ import {
   VisibilityState,
   UIKitDocument,
   UIKit,
+  AssetManager,
+  Interactable,
 } from "@iwsdk/core";
 
 export class PanelLoadObjectSystem extends createSystem({
@@ -24,8 +26,24 @@ export class PanelLoadObjectSystem extends createSystem({
       }
 
       const xrButton = document.getElementById("xr-button") as UIKit.Text;
-      xrButton.addEventListener("click", () => {
-        xrButton.setProperties({ text: "You will now load an object!" });
+      xrButton.addEventListener("click", async () => {
+        const modelUrl = "https://neandertale.com/";
+        xrButton.setProperties({ text: "Loading Tractor..." });
+
+        try {
+          //const gltf = await AssetManager.loadGLTF(modelUrl, "Tractor.gltf");
+          const gltf = await AssetManager.loadGLTF("https://neandertale.com/Tractor.gltf");
+          const tractor = gltf.scene;
+          tractor.position.set(0, 0, -2);
+
+          const tractorEntity = this.world.createTransformEntity(tractor);
+          tractorEntity.addComponent(Interactable);
+
+          xrButton.setProperties({ text: "Tractor loaded!" });
+        } catch (err) {
+          console.error("Failed to load Tractor.gltf", err);
+          xrButton.setProperties({ text: "Tractor load failed" });
+        }
       });
     });
   }

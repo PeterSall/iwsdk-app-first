@@ -23,7 +23,6 @@ import {
 import { EnvironmentType, LocomotionEnvironment } from "@iwsdk/core";
 
 import { PanelWelcomeSystem } from "./panelWelcome.js";
-
 import { PanelLoadObjectSystem } from "./panelLoadObject.js";
 
 import { Robot } from "./robot.js";
