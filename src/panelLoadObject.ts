@@ -10,7 +10,10 @@ import {
   AssetManager,
   Interactable,
   MovementMode,
+  Entity,
+  Object3D,
 } from "@iwsdk/core";
+import { GLTF } from "three/examples/jsm/Addons.js";
 
 export class PanelLoadObjectSystem extends createSystem({
   loadObjectPanel: {
@@ -36,6 +39,93 @@ export class PanelLoadObjectSystem extends createSystem({
     }
   }
 
+  private async parseMeshComponent(data: any): Promise<GLTF> {
+    if (data.ref) {
+      const gltf = await AssetManager.loadGLTF(data.ref);
+      return gltf;
+    }
+    throw new Error("Mesh component missing ref field");
+  }
+
+  private parseTransformComponent(entity: Object3D, data: any) {
+    if (data.pos && Array.isArray(data.pos) && data.pos.length === 3) {
+      entity.position.set(data.pos[0], data.pos[1], data.pos[2]);
+    }
+    if (data.rot && Array.isArray(data.rot) && data.rot.length === 3) {
+      const degToRad = Math.PI / 180;
+      entity.rotation.set(data.rot[0] * degToRad, data.rot[1] * degToRad, data.rot[2] * degToRad);
+    }
+    if (data.scale !== undefined) {
+      entity.scale.setScalar(data.scale);
+    }
+  }
+
+  private parseInteractableComponent(entity: Entity, data: any) {
+    entity.addComponent(Interactable);
+  }
+
+  private parseDistanceGrabbableComponent(entity: Entity, data: any) {
+    entity.addComponent(DistanceGrabbable, {
+      movementMode: MovementMode.MoveFromTarget,
+    });
+  }
+
+  private parseBoundingBoxComponent(entity: any, data: any) {
+    // Bounding box component - empty for now
+    // TODO: Implement bounding box logic when needed
+  }
+
+  private async parseObjectFromJSON(jsonData: any, objectName: string) {
+    try {
+      const objectDef = jsonData[objectName];
+      if (!objectDef) {
+        throw new Error(`Object ${objectName} not found in JSON`);
+      }
+
+      let entity: Entity|null = null;
+
+      // Process components in order
+      for (const component of objectDef.components) {
+        switch (component.type) {
+          case "mesh":
+            const gltf = await this.parseMeshComponent(component.data);
+            entity = this.world.createTransformEntity(gltf.scene);
+            break;
+          case "transform":if (entity) {this.parseTransformComponent(entity.object3D!, component.data);}break;
+          case "interactable":if (entity) {this.parseInteractableComponent(entity, component.data);}break;
+          case "distanceGrabbable":if (entity) {this.parseDistanceGrabbableComponent(entity, component.data);}break;
+          case "boundingbox":if (entity) {this.parseBoundingBoxComponent(entity, component.data);}break;
+          default:console.warn(`Unknown component type: ${component.type}`);
+        }
+      }
+
+      return { success: true, entity };
+    } catch (err) {
+      console.error(`Failed to parse object ${objectName}`, err);
+      return { success: false, error: err };
+    }
+  }
+
+  private async onLoadObjectButtonClick(xrButton: UIKit.Text) {
+    xrButton.setProperties({ text: "Loading Tractor..." });
+
+    const response = await fetch("https://neandertale.com/imi/tractor3.json");
+    if (!response.ok) {
+      console.error("Failed to fetch tractor JSON", response.statusText);
+      xrButton.setProperties({ text: "Tractor load failed" });
+      return;
+    }
+
+    const tractorJson = await response.json();
+    const result = await this.parseObjectFromJSON(tractorJson, "tractor");
+
+    if (result.success) {
+      xrButton.setProperties({ text: "Tractor loaded!" });
+    } else {
+      xrButton.setProperties({ text: "Tractor load failed" + result.error });
+    }
+  }
+
   init() {
     this.queries.loadObjectPanel.subscribe("qualify", (entity) => {
       const document = PanelDocument.data.document[
@@ -46,19 +136,11 @@ export class PanelLoadObjectSystem extends createSystem({
       }
 
       const xrButton = document.getElementById("xr-button") as UIKit.Text;
+
+      this.onLoadObjectButtonClick(xrButton);
+
       xrButton.addEventListener("click", async () => {
-        const modelUrl = "https://neandertale.com/";
-        xrButton.setProperties({ text: "Loading Tractor..." });
-
-        //const result = await this.loadAndPlaceObject("https://neandertale.com/imi/Tractor.gltf", { x: 0, y: 3, z: -2 });
-
-        const result = await this.loadAndPlaceObject("https://neandertale.com/imi/Tractor.gltf", { x: 0, y: 3, z: -2 });
-
-        if (result.success) {
-          xrButton.setProperties({ text: "Tractor loaded!" });
-        } else {
-          xrButton.setProperties({ text: "Tractor load failed" });
-        }
+        await this.onLoadObjectButtonClick(xrButton);
       });
     });
   }

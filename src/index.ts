@@ -126,12 +126,7 @@ World.create(document.getElementById("scene-container") as HTMLDivElement, {
       maxHeight: 0.8,
       maxWidth: 1.6,
     })
-    .addComponent(Interactable)
-    .addComponent(ScreenSpace, {
-      top: "20px",
-      left: "20px",
-      height: "40%",
-    });
+    .addComponent(Interactable);
   panelEntity.object3D!.position.set(0, 1.29, -1.9);
 
   const loadObjectPanelEntity = world
