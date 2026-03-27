@@ -14,6 +14,7 @@ import {
   Object3D,
 } from "@iwsdk/core";
 import { GLTF } from "three/examples/jsm/Addons.js";
+import { RotateObjectComponent } from "./rotateObject.js";
 
 export class PanelLoadObjectSystem extends createSystem({
   loadObjectPanel: {
@@ -100,6 +101,14 @@ export class PanelLoadObjectSystem extends createSystem({
           case "interactable":if (entity) {this.parseInteractableComponent(entity, component.data);}break;
           case "distanceGrabbable":if (entity) {this.parseDistanceGrabbableComponent(entity, component.data);}break;
           case "boundingbox":if (entity) {this.parseBoundingBoxComponent(entity, component.data);}break;
+          case "rotate":
+            if (entity) {
+              entity.addComponent(RotateObjectComponent, {
+                axis: component.data.axis || 'y',
+                speed: component.data.speed || 1.0
+              });
+            }
+            break;
           default:console.warn(`Unknown component type: ${component.type}`);
         }
       }
