@@ -47,16 +47,17 @@ export class PanelLoadObjectSystem extends createSystem({
     throw new Error("Mesh component missing ref field");
   }
 
-  private parseTransformComponent(entity: Object3D, data: any) {
+  private parseTransformComponent(entity: Entity, data: any) {
+    let obj : Object3D = entity.object3D!;
     if (data.pos && Array.isArray(data.pos) && data.pos.length === 3) {
-      entity.position.set(data.pos[0], data.pos[1], data.pos[2]);
+      obj.position.set(data.pos[0], data.pos[1], data.pos[2]);
     }
     if (data.rot && Array.isArray(data.rot) && data.rot.length === 3) {
       const degToRad = Math.PI / 180;
-      entity.rotation.set(data.rot[0] * degToRad, data.rot[1] * degToRad, data.rot[2] * degToRad);
+      obj.rotation.set(data.rot[0] * degToRad, data.rot[1] * degToRad, data.rot[2] * degToRad);
     }
     if (data.scale !== undefined) {
-      entity.scale.setScalar(data.scale);
+      obj.scale.setScalar(data.scale);
     }
   }
 
@@ -91,7 +92,7 @@ export class PanelLoadObjectSystem extends createSystem({
             const gltf = await this.parseMeshComponent(component.data);
             entity = this.world.createTransformEntity(gltf.scene);
             break;
-          case "transform":if (entity) {this.parseTransformComponent(entity.object3D!, component.data);}break;
+          case "transform":if (entity) {this.parseTransformComponent(entity, component.data);}break;
           case "interactable":if (entity) {this.parseInteractableComponent(entity, component.data);}break;
           case "distanceGrabbable":if (entity) {this.parseDistanceGrabbableComponent(entity, component.data);}break;
           case "boundingbox":if (entity) {this.parseBoundingBoxComponent(entity, component.data);}break;
