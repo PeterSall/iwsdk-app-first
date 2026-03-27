@@ -154,7 +154,11 @@ World.create(document.getElementById("scene-container") as HTMLDivElement, {
   logoBanner.position.set(0, 1, 1.8);
   logoBanner.rotateY(Math.PI);
 
-  world.registerSystem(PanelWelcomeSystem).registerSystem(PanelLoadObjectSystem).registerSystem(RobotSystem).registerSystem(RotateObjectSystem);
+  // Register systems
+  world.registerSystem(PanelWelcomeSystem);
+  world.registerSystem(PanelLoadObjectSystem);
+  world.registerSystem(RobotSystem);
+  world.registerSystem(RotateObjectSystem);
 
   // Setup desktop browser controls
   setupDesktopLocomotion(world);

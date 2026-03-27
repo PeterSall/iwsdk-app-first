@@ -22,7 +22,7 @@ export class RotateObjectSystem extends createSystem({
       if (!obj3D) return;
 
       const radiansDelta = (speed * (Math.PI / 180)) * delta;
-
+        
       if (axis === 'x') {
         obj3D.rotateX(radiansDelta);
       } else if (axis === 'y') {

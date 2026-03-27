@@ -12,9 +12,11 @@ import {
   MovementMode,
   Entity,
   Object3D,
+  Vector3,
 } from "@iwsdk/core";
 import { GLTF } from "three/examples/jsm/Addons.js";
 import { RotateObjectComponent } from "./rotateObject.js";
+import { Actions, ActionMoveTo, ActionTeleportTo } from "./actions.js";
 
 export class PanelLoadObjectSystem extends createSystem({
   loadObjectPanel: {
@@ -22,6 +24,12 @@ export class PanelLoadObjectSystem extends createSystem({
     where: [eq(PanelUI, "config", "./ui/loadObject.json")],
   },
 }) {
+
+  public entitiesDic = new Map<string, Entity>();
+  public actions: Actions[] = [];
+  //public entities: Entity[] = [];
+  public static instance: PanelLoadObjectSystem;
+
   private async loadAndPlaceObject(url: string, position: { x: number; y: number; z: number }) {
     try {
       const gltf = await AssetManager.loadGLTF(url);
@@ -76,46 +84,126 @@ export class PanelLoadObjectSystem extends createSystem({
     });
   }
 
-  private parseBoundingBoxComponent(entity: any, data: any) {
+  private parseBoundingBoxComponent(entity: Entity, data: any) {
     // Bounding box component - empty for now
     // TODO: Implement bounding box logic when needed
   }
 
-  private async parseObjectFromJSON(jsonData: any, objectName: string) {
+  private parseRotateComponent(entity: Entity, data: any) {
+    entity.addComponent(RotateObjectComponent, {
+      axis: (data.axis || 'y').toLowerCase(),
+      speed: data.speed != null ? data.speed : 1.0,
+    });
+  }
+
+  private async parseType3DMesh(objectDef: any) {
+    if (!objectDef || !Array.isArray(objectDef.components)) {
+      //console.warn(`Skipping invalid object definition: ${objectName}`);
+      return null;
+    }
+
+    let entity: Entity|null = null;
+
+    for (const component of objectDef.components) {
+      switch (component.type) {
+        case "mesh":
+          if (entity != null)
+              throw new Error("Multiple mesh components found for a single object. Only one mesh component is allowed per object.");
+          const gltf = await this.parseMeshComponent(component.data);
+          // Must clone, so we can have multiple instances of the same GLTF in the scene
+          const meshClone = gltf.scene.clone(true);
+          entity = this.world.createTransformEntity(meshClone);
+          break;
+        case "transform":
+          if (entity) { this.parseTransformComponent(entity, component.data); }
+          break;
+        case "interactable":
+          if (entity) { this.parseInteractableComponent(entity, component.data); }
+          break;
+        case "distanceGrabbable":
+          if (entity) { this.parseDistanceGrabbableComponent(entity, component.data); }
+          break;
+        case "boundingbox":
+          if (entity) { this.parseBoundingBoxComponent(entity, component.data); }
+          break;
+        case "rotate":
+          if (entity) { this.parseRotateComponent(entity, component.data); }
+          break;
+        default:
+          console.warn(`Unknown component type: ${component.type}`);
+      }
+    }
+    return entity;
+  }
+
+  private parseTypeActions(objectDef: any) : Actions|null {
+    if (!objectDef || !Array.isArray(objectDef.components)) {
+      //console.warn(`Skipping invalid object definition: ${objectName}`);
+      return null;
+    }
+
+    let actions: Actions = new Actions();
+
+    for (const component of objectDef.components) {
+      switch (component.type) {
+        case "ActionMoveTo":
+          actions.add(new ActionMoveTo(
+            component.data.id,
+            new Vector3(component.data.target[0], component.data.target[1], component.data.target[2]),
+            component.data.speed
+          ));
+          break;
+        case "ActionTeleportTo":
+          actions.add(new ActionTeleportTo(
+            component.data.id,
+            new Vector3(component.data.target[0], component.data.target[1], component.data.target[2])
+          ));
+          break;
+        default:
+          console.warn(`Unknown component type: ${component.type}`);
+      }
+    }
+
+    actions.setActiveFirst();
+    
+    console.error(`Test output: ${actions.getAll().length} actions parsed`);
+    return actions;
+  }
+
+
+  private async parseObjectFromJSON(jsonData: any) {
     try {
-      const objectDef = jsonData[objectName];
-      if (!objectDef) {
-        throw new Error(`Object ${objectName} not found in JSON`);
+      const objectNames = Object.keys(jsonData);
+      if (objectNames.length === 0) {
+        throw new Error("JSON contains no objects to parse");
       }
 
-      let entity: Entity|null = null;
+      for (const objectName of objectNames) {
+        const objectDef = jsonData[objectName];
 
-      // Process components in order
-      for (const component of objectDef.components) {
-        switch (component.type) {
-          case "mesh":
-            const gltf = await this.parseMeshComponent(component.data);
-            entity = this.world.createTransformEntity(gltf.scene);
-            break;
-          case "transform":if (entity) {this.parseTransformComponent(entity, component.data);}break;
-          case "interactable":if (entity) {this.parseInteractableComponent(entity, component.data);}break;
-          case "distanceGrabbable":if (entity) {this.parseDistanceGrabbableComponent(entity, component.data);}break;
-          case "boundingbox":if (entity) {this.parseBoundingBoxComponent(entity, component.data);}break;
-          case "rotate":
+        const type : string = objectDef.type;
+        const id : string = objectDef.id;
+
+        switch (type) {
+          case "3dMesh":
+            let entity: Entity|null = null;
+            entity = await this.parseType3DMesh(objectDef);
             if (entity) {
-              entity.addComponent(RotateObjectComponent, {
-                axis: component.data.axis || 'y',
-                speed: component.data.speed || 1.0
-              });
+              this.entitiesDic.set(id, entity);
             }
             break;
-          default:console.warn(`Unknown component type: ${component.type}`);
+          case "actions":
+            const actions = this.parseTypeActions(objectDef);
+            this.actions.push(actions!);
+            break;
+          default:
+            console.warn(`Unknown object type: ${type} for object ${objectName}`);
         }
       }
 
-      return { success: true, entity };
+      return { success: true };
     } catch (err) {
-      console.error(`Failed to parse object ${objectName}`, err);
+      console.error("Failed to parse JSON objects", err);
       return { success: false, error: err };
     }
   }
@@ -131,16 +219,20 @@ export class PanelLoadObjectSystem extends createSystem({
     }
 
     const tractorJson = await response.json();
-    const result = await this.parseObjectFromJSON(tractorJson, "tractor");
+    const result = await this.parseObjectFromJSON(tractorJson);
 
     if (result.success) {
-      xrButton.setProperties({ text: "Tractor loaded!" });
+      const loadedModels = this.entitiesDic.size;
+      const loadedActions = this.actions.length;
+      xrButton.setProperties({ text: `Tractor loaded! (${loadedModels} models, ${loadedActions} actions)` });
     } else {
       xrButton.setProperties({ text: "Tractor load failed" + result.error });
     }
   }
 
   init() {
+    PanelLoadObjectSystem.instance = this;
+
     this.queries.loadObjectPanel.subscribe("qualify", (entity) => {
       const document = PanelDocument.data.document[
         entity.index
@@ -157,5 +249,13 @@ export class PanelLoadObjectSystem extends createSystem({
         await this.onLoadObjectButtonClick(xrButton);
       });
     });
+  }
+
+  // Here we can run the logic for loaded objects, especially for non entities like actions.
+  // (other objects that uses the ECS already run their update logic)
+  update(delta: number, time: number): void {
+      for (const actions of this.actions) {
+        actions.update(delta);
+      }
   }
 }
