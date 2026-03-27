@@ -57,7 +57,11 @@ export class PanelLoadObjectSystem extends createSystem({
       obj.rotation.set(data.rot[0] * degToRad, data.rot[1] * degToRad, data.rot[2] * degToRad);
     }
     if (data.scale !== undefined) {
-      obj.scale.setScalar(data.scale);
+      if (Array.isArray(data.scale) && data.scale.length === 3) {
+        obj.scale.set(data.scale[0], data.scale[1], data.scale[2]);
+      } else {
+        obj.scale.setScalar(data.scale);
+      }
     }
   }
 
