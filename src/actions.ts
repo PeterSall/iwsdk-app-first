@@ -68,16 +68,16 @@ export class ActionMoveTo implements IAction {
       console.warn(`Entity with ID ${this.entityID} not found for ActionMoveTo`);
       return;
     }
-    const transform = entity.object3D?.position;
-    if (!transform) {
+    const pos = entity.object3D?.position;
+    if (!pos) {
         throw new Error("Entity does not have a Transform component or object3D position");
         return;
     }
 
     const direction = new Vector3(
-      this.target.x - transform.x,
-      this.target.y - transform.y,
-      this.target.z - transform.z,
+      this.target.x - pos.x,
+      this.target.y - pos.y,
+      this.target.z - pos.z,
     );
 
     const distance = direction.length();
@@ -85,11 +85,11 @@ export class ActionMoveTo implements IAction {
 
     direction.divideScalar(distance);
     const moveDistance = Math.min(this.speed * delta, distance);
-    transform.addScaledVector(direction, moveDistance);
+    pos.addScaledVector(direction, moveDistance);
 
     if (entity.object3D) {
       // Keep ECS transform in sync through object3D
-      entity.object3D.position.copy(transform);
+      entity.object3D.position.copy(pos);
     }
   }
 }

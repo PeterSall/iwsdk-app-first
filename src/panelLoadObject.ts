@@ -50,6 +50,7 @@ export class PanelLoadObjectSystem extends createSystem({
 
   private async parseMeshComponent(data: any): Promise<GLTF> {
     if (data.ref) {
+      // ref is expected to be a URL to a GLTF file
       const gltf = await AssetManager.loadGLTF(data.ref);
       return gltf;
     }
